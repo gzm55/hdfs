@@ -109,7 +109,7 @@ func (s *blockReadStream) Read(b []byte) (int, error) {
 
 		err := s.validateChecksum(b[chunkOff:chunkEnd])
 		if err != nil {
-			return n, err
+			return chunkOff, err
 		}
 
 		s.chunkIndex++
