@@ -3,3 +3,5 @@ gohdfs*
 hdfs
 !hdfs/
 minicluster.log
+hadoop.tar.gz
+test-hadoop-home/

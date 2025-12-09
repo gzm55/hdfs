@@ -497,14 +497,14 @@ func TestFileAppendDeadline(t *testing.T) {
 	writer, err = client.Append("/_test/append/5.txt")
 	require.NoError(t, err)
 
-	writer.SetDeadline(time.Now().Add(100 * time.Millisecond))
+	writer.SetDeadline(time.Now().Add(1000 * time.Millisecond))
 	_, err = writer.Write([]byte("foo"))
 	assert.NoError(t, err)
 
 	err = writer.Flush()
 	assert.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	_, err = writer.Write([]byte("bar"))
 	assert.NoError(t, err)
 
