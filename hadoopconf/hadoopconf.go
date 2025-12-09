@@ -266,21 +266,21 @@ const (
 
 // returns the type of namenode/address
 // 3 situation
+// A. begin with viewfs://
 // A. Just a simple hostname (with port)
-// B. A NameServiceID without viewfs mount links
-// C. A NameServiceID with viewfs mount links
+// C. A NameServiceID
+// NOTE: mounttable link is not checked
 func (conf HadoopConf) CheckTypeOfNameAddressString(maybe_addr string) TypeOfNamenodeAddressString {
+	// viewfs
+	if strings.HasPrefix(maybe_addr, "viewfs://") {
+		return TNAS_ViewfsNameServiceID
+	}
+
 	// if address is "Host:Port" style
 	if strings.Contains(maybe_addr, ":") {
 		return TNAS_SimpleAddress
 	}
-	// check is there any mounttable
-	prefix := "fs.viewfs.mounttable." + maybe_addr + ".link."
-	for key, _ := range conf {
-		if strings.HasPrefix(key, prefix) {
-			return TNAS_ViewfsNameServiceID
-		}
-	}
+
 	// check is it a NameServiceID
 	nsids_str, _ := conf["dfs.nameservices"]
 	nsids := strings.Split(nsids_str, ",")

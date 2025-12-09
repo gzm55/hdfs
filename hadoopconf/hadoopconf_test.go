@@ -47,10 +47,10 @@ func TestConfCheckTypeOfNameAddressString(t *testing.T) {
 	conf, err := LoadFromEnvironment()
 	assert.NoError(t, err)
 
-	ty = conf.CheckTypeOfNameAddressString("nsX")
+	ty = conf.CheckTypeOfNameAddressString("viewfs://nsX")
 	assert.EqualValues(t, TNAS_ViewfsNameServiceID, ty, "check addr type in (test/conf-viewfs)")
 
-	ty = conf.CheckTypeOfNameAddressString("nsY")
+	ty = conf.CheckTypeOfNameAddressString("viewfs://nsY")
 	assert.EqualValues(t, TNAS_ViewfsNameServiceID, ty, "check addr type in (test/conf-viewfs)")
 
 	ty = conf.CheckTypeOfNameAddressString("localhost:8080")
