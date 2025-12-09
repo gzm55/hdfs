@@ -97,7 +97,7 @@ func TestConfWithViewfs(t *testing.T) {
 	assert.EqualValues(t, "viewfs://nsX", newnsid, "loading via specified path and default nsid (test/conf-viewfs)")
 	assert.EqualValues(t, "/norm", newpath, "loading via specified path and default nsid (test/conf-viewfs)")
 
-	newnsid, newpath, err = conf.ViewfsReparseFilename("", "hdfs://nsX/cloud/sub")
+	newnsid, newpath, err = conf.ViewfsReparseFilename("", "viewfs://nsX/cloud/sub")
 	assert.Nil(t, err)
 	assert.EqualValues(t, "SunshineNameNode1", newnsid, "loading via specified path (test/conf-viewfs)")
 	assert.EqualValues(t, "/_cloud/sub", newpath, "loading via specified path (test/conf-viewfs)")
@@ -112,14 +112,19 @@ func TestConfWithViewfs(t *testing.T) {
 	assert.EqualValues(t, "SunshineNameNode2", newnsid, "loading via specified path (test/conf-viewfs)")
 	assert.EqualValues(t, "/_user/sub", newpath, "loading via specified path (test/conf-viewfs)")
 
-	newnsid, newpath, err = conf.ViewfsReparseFilename("nsY", "/app/sub")
+	newnsid, newpath, err = conf.ViewfsReparseFilename("viewfs://nsY", "/app/sub")
 	assert.Nil(t, err)
 	assert.EqualValues(t, "SunshineNameNode3", newnsid, "loading via specified path (test/conf-viewfs)")
 	assert.EqualValues(t, "/_app/sub", newpath, "loading via specified path (test/conf-viewfs)")
 
-	newnsid, newpath, err = conf.ViewfsReparseFilename("", "hdfs://nsZ/app/sub")
+	newnsid, newpath, err = conf.ViewfsReparseFilename("", "viewfs://nsY/app/sub2")
 	assert.Nil(t, err)
-	assert.EqualValues(t, "nsZ", newnsid, "loading via specified path (test/conf-viewfs)")
+	assert.EqualValues(t, "SunshineNameNode3", newnsid, "loading via specified path (test/conf-viewfs)")
+	assert.EqualValues(t, "/_app/sub2", newpath, "loading via specified path (test/conf-viewfs)")
+
+	newnsid, newpath, err = conf.ViewfsReparseFilename("", "viewfs://nsZ/app/sub")
+	assert.Nil(t, err)
+	assert.EqualValues(t, "viewfs://nsZ", newnsid, "loading via specified path (test/conf-viewfs)")
 	assert.EqualValues(t, "/app/sub", newpath, "loading via specified path (test/conf-viewfs)")
 
 	os.Setenv("HADOOP_HOME", oldHome)

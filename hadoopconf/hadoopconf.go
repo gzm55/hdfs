@@ -170,13 +170,6 @@ func (conf HadoopConf) AddressesByNameServiceID(nsid string) []string {
 	if strings.HasPrefix(nsid, "viewfs://") || strings.Contains(nsid, ":") {
 		return []string{nsid}
 	}
-	//if nsid == conf.DefaultNSID() && strings.Contains(nsid, ":") {
-		//value := conf.DefaultFS()
-		//nnUrl, err := url.Parse(value)
-		//if err == nil {
-			//return []string{nnUrl.Host}
-		//}
-	//}
 
 	// for simple
 	key := "dfs.namenode.rpc-address." + nsid
@@ -215,25 +208,24 @@ var errInvalidHDFSFilename = errors.New("invalid HDFS Filename")
 //   defaultFS = nsX
 // then
 //  call ("/user/sub") returns ("SunshineNameNode3", "/user/sub", nil)
-//  call ("hdfs://nsX/user/sub") returns ("SunshineNameNode3", "/user2/sub", nil)
+//  call ("viewfs://nsX/user/sub") returns ("SunshineNameNode3", "/user2/sub", nil)
 func (conf HadoopConf) ViewfsReparseFilename(rootnsid string, filename string) (string, string, error) {
 	var nsid, path string
 	u, err := url.Parse(filename)
-	if err != nil || (u.Scheme != "hdfs" && u.Scheme != "") {
+	if err != nil || (u.Scheme != "viewfs" && u.Scheme != "") {
 		return "", "", errInvalidHDFSFilename
 	}
 	if u.Host != "" && rootnsid != "" { // host and nsid conflict
 		return "", "", errInvalidHDFSFilename
 	}
 	nsid, path = u.Host, u.Path
-	if nsid == "" {
+	if u.Host == "" {
 		nsid = rootnsid
 	}
 	if nsid == "" {
 		nsid = conf.DefaultNSID()
 	}
 
-	fullNsid := nsid
 	nsid = strings.TrimPrefix(nsid, "viewfs://")
 
 	dirs := strings.Split(path, "/")
@@ -251,7 +243,7 @@ func (conf HadoopConf) ViewfsReparseFilename(rootnsid string, filename string) (
 			return u.Host, u.Path, nil
 		}
 	}
-	return fullNsid, path, nil
+	return "viewfs://" + nsid, path, nil
 }
 
 // type of namenode address string
