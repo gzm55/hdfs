@@ -66,11 +66,11 @@ func putFromStdin(client *hdfs.Client, dest string) {
 
 	err = writer.Flush()
 	if err != nil {
-		return err
+		fatal(err)
 	}
 	err = writer.Close()
 	if err != nil {
-		return err
+		fatal(err)
 	}
 }
 
