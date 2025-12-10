@@ -8,10 +8,12 @@ import (
 	"os/user"
 	"strings"
 	"time"
+	"sync"
 
 	"github.com/colinmarc/hdfs/v2"
 	"github.com/colinmarc/hdfs/v2/hadoopconf"
 	"github.com/pborman/getopt"
+	krb "github.com/jcmturner/gokrb5/v8/client"
 )
 
 // TODO: cp, tree, test, trash
@@ -195,6 +197,62 @@ func fatalWithUsage(msg ...interface{}) {
 	os.Exit(2)
 }
 
+var (
+	conf hadoopconf.HadoopConf
+	confOnce sync.Once
+	confErr error
+
+	krbClient *krb.Client
+	krbClientOnce sync.Once
+	krbClientErr error
+
+	username string
+	userOnce sync.Once
+	userErr error
+)
+func getConf() (*hadoopconf.HadoopConf, error) {
+	confOnce.Do(func() {
+		conf, confErr = hadoopconf.LoadFromEnvironment()
+	})
+	return &conf, confErr
+}
+func getKrbClientOnce() (*krb.Client, error) {
+	krbClientOnce.Do(func() {
+		krbClient, krbClientErr = getKerberosClient()
+	})
+	return krbClient, krbClientErr
+}
+func getUser() (*string, error) {
+	userOnce.Do(func() {
+		conf, err := getConf()
+		if err != nil {
+			username, userErr = "", err
+		} else if strings.ToLower((*conf)["hadoop.security.authentication"]) == "kerberos" {
+			// kerberos
+			krb, err := getKrbClientOnce()
+			if err != nil {
+				username, userErr = "", err
+			} else {
+				username, userErr = krb.Credentials.UserName(), nil
+			}
+		} else {
+			// non-kerberos
+			username = os.Getenv("HADOOP_USER_NAME")
+			if username != "" {
+				userErr = nil
+			} else {
+				u, err := user.Current()
+				if err == nil {
+					username, userErr = u.Username, err
+				} else {
+					username, userErr = "", err
+				}
+			}
+		}
+	})
+	return &username, userErr
+}
+
 func getClient(namenode string) (*hdfs.Client, error) {
 	if cachedClients[namenode] != nil {
 		return cachedClients[namenode], nil
@@ -204,12 +262,12 @@ func getClient(namenode string) (*hdfs.Client, error) {
 		namenode = os.Getenv("HADOOP_NAMENODE")
 	}
 
-	conf, err := hadoopconf.LoadFromEnvironment()
+	conf, err := getConf()
 	if err != nil {
 		return nil, fmt.Errorf("Problem loading configuration: %s", err)
 	}
 
-	options := hdfs.ClientOptionsFromConf(conf)
+	options := hdfs.ClientOptionsFromConf(*conf)
 	if namenode != "" {
 		options.Addresses = strings.Split(namenode, ",")
 	}
@@ -219,20 +277,16 @@ func getClient(namenode string) (*hdfs.Client, error) {
 	}
 
 	if options.KerberosClient != nil {
-		options.KerberosClient, err = getKerberosClient()
+		options.KerberosClient, err = getKrbClientOnce()
 		if err != nil {
 			return nil, fmt.Errorf("Problem with kerberos authentication: %s", err)
 		}
 	} else {
-		options.User = os.Getenv("HADOOP_USER_NAME")
-		if options.User == "" {
-			u, err := user.Current()
-			if err != nil {
-				return nil, fmt.Errorf("Couldn't determine user: %s", err)
-			}
-
-			options.User = u.Username
+		u, err := getUser()
+		if err != nil {
+			return nil, fmt.Errorf("Couldn't determine user: %s", err)
 		}
+		options.User = *u
 	}
 
 	// Set some basic defaults.

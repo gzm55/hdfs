@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -19,10 +20,16 @@ func userDir(client *hdfs.Client) string {
 	return path.Join("/user", client.User())
 }
 
-// normalizePaths parses the hosts out of HDFS URLs, and turns relative paths
-// into absolute ones (by appending /user/<user>). If multiple HDFS urls with
+// normalizePaths parses the hosts out of HDFS (hdfs://, viewfs://, /abs/path, relative/path) URLs,
+// and turns relative paths into absolute ones (by appending /user/<user>).
+// viewfs://viewfsid is mapped into hdfs:// nsid. If multiple HDFS urls with
 // differing hosts are passed in, it returns an error.
 func normalizePaths(paths []string) ([]string, string, error) {
+	conf, err := getConf()
+	if err != nil {
+		return nil, "", fmt.Errorf("Problem loading configuration: %s", err)
+	}
+
 	namenode := ""
 	cleanPaths := make([]string, 0, len(paths))
 
@@ -32,18 +39,76 @@ func normalizePaths(paths []string) ([]string, string, error) {
 			return nil, "", err
 		}
 
+		cleanPath := url.Path
+		switch url.Scheme {
+		case "":
+			if (!path.IsAbs(cleanPath)) {
+				user, err := getUser()
+				if err != nil {
+					return nil, "", fmt.Errorf("Couldn't determine user: %s", err)
+				}
+				cleanPath = path.Join("/user", *user, cleanPath)
+			}
+		case "viewfs", "hdfs":
+		default: return nil, "", errors.New("invalid HDFS Scheme")
+		}
+
 		if url.Host != "" {
-			if namenode != "" && namenode != url.Host {
+			nsid := url.Host
+			if url.Scheme == "viewfs" {
+				// convert viwefs:// scheme to hdfs://
+				nsid, cleanPath, err = conf.ViewfsReparseFilename("viewfs://" + nsid, cleanPath)
+				if err != nil {
+					return nil, "", fmt.Errorf("Reparse viewfs fail: %s", err)
+				} else if strings.HasPrefix(nsid, "viewfs://") {
+					return nil, "", errors.New("no mount point for " + rawurl)
+				}
+			}
+
+			if namenode != "" && namenode != nsid {
 				return nil, "", errMultipleNamenodeUrls
 			}
 
-			namenode = url.Host
+			namenode = nsid
 		}
 
-		cleanPaths = append(cleanPaths, path.Clean(url.Path))
+		cleanPaths = append(cleanPaths, cleanPath)
 	}
 
-	return cleanPaths, namenode, nil
+	// already resolved to hdfs:// nsid
+	if namenode != "" || os.Getenv("HADOOP_NAMENODE") != "" {
+		return cleanPaths, namenode, nil
+	}
+
+	defaultNsid := conf.DefaultNSID()
+	// default fs is hdfs://
+	if !strings.HasPrefix(defaultNsid, "viewfs://") {
+		return cleanPaths, namenode, nil
+	}
+
+	// reparse for default viewfs
+	result := make([]string, 0, len(paths))
+	for _, p := range cleanPaths {
+		nsid, newpath, err := conf.ViewfsReparseFilename(defaultNsid, p)
+		if err != nil {
+			return nil, "", fmt.Errorf("Reparse viewfs fail: %s", err)
+		} else if strings.HasPrefix(nsid, "viewfs://") {
+			return nil, "", errors.New("no mount point for " + defaultNsid + p)
+		}
+
+		if namenode != "" && namenode != nsid {
+			return nil, "", errMultipleNamenodeUrls
+		}
+
+		namenode = nsid
+		result = append(result, newpath)
+	}
+
+	if namenode == "" {
+		return nil, "", errors.New("no namenode")
+	}
+
+	return result, namenode, nil
 }
 
 func getClientAndExpandedPaths(paths []string) ([]string, *hdfs.Client, error) {
@@ -135,13 +200,8 @@ func expandGlobs(client *hdfs.Client, globbedPath string) ([]string, error) {
 
 func expandPaths(client *hdfs.Client, paths []string) ([]string, error) {
 	var res []string
-	home := userDir(client)
 
 	for _, p := range paths {
-		if !path.IsAbs(p) {
-			p = path.Join(home, p)
-		}
-
 		if hasGlob(p) {
 			expanded, err := expandGlobs(client, p)
 			if err != nil {
