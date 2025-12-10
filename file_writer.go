@@ -236,19 +236,31 @@ func (f *FileWriter) Close() error {
 		}
 	}
 
-	completeReq := &hdfs.CompleteRequestProto{
-		Src:        proto.String(f.name),
-		ClientName: proto.String(f.client.namenode.ClientName),
-		Last:       lastBlock,
-		FileId:     f.fileId,
-	}
-	completeResp := &hdfs.CompleteResponseProto{}
+	// retry complete for at most about 2 minutes
+	sleepMs := 400
+	retries := 9
 
-	err := f.client.namenode.Execute("complete", completeReq, completeResp)
-	if err != nil {
-		return &os.PathError{"create", f.name, err}
-	} else if completeResp.GetResult() == false {
-		return &os.PathError{"create", f.name, ErrReplicating}
+	for {
+		completeReq := &hdfs.CompleteRequestProto{
+			Src:        proto.String(f.name),
+			ClientName: proto.String(f.client.namenode.ClientName),
+			Last:       lastBlock,
+			FileId:     f.fileId,
+		}
+		completeResp := &hdfs.CompleteResponseProto{}
+		err := f.client.namenode.Execute("complete", completeReq, completeResp)
+		if err != nil {
+			return &os.PathError{"create", f.name, err}
+		} else if completeResp.GetResult() == false {
+			if retries == 0 {
+				return &os.PathError{"create", f.name, ErrReplicating}
+			}
+			retries -= 1
+			time.Sleep(time.Duration(sleepMs) * time.Millisecond)
+			sleepMs *= 2
+		} else {
+			break
+		}
 	}
 
 	return nil

@@ -58,13 +58,20 @@ func putFromStdin(client *hdfs.Client, dest string) {
 	if err != nil {
 		fatal(err)
 	}
-	defer writer.Close()
 
 	_, err = io.Copy(writer, os.Stdin)
 	if err != nil {
 		fatal(err)
 	}
-	writer.Flush()
+
+	err = writer.Flush()
+	if err != nil {
+		return err
+	}
+	err = writer.Close()
+	if err != nil {
+		return err
+	}
 }
 
 func putFromFile(client *hdfs.Client, source string, dest string) {
@@ -102,7 +109,6 @@ func putFromFile(client *hdfs.Client, source string, dest string) {
 				return err
 			}
 
-			defer writer.Close()
 			reader, err := os.Open(p)
 			if err != nil {
 				return err
@@ -113,7 +119,15 @@ func putFromFile(client *hdfs.Client, source string, dest string) {
 			if err != nil {
 				return err
 			}
-			writer.Flush()
+
+			err = writer.Flush()
+			if err != nil {
+				return err
+			}
+			err = writer.Close()
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
