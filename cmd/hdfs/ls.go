@@ -14,6 +14,9 @@ import (
 )
 
 func ls(paths []string, long, all, humanReadable, recursive bool) {
+	if len(paths) == 0 {
+		paths = []string{"."}
+	}
 	paths, client, err := getClientAndExpandedPaths(paths)
 	if err != nil {
 		fatal(err)

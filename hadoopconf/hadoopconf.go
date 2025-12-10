@@ -143,15 +143,12 @@ func (conf HadoopConf) Namenodes() []string {
 
 // return the NameServiceID of defaultFS
 func (conf HadoopConf) DefaultNSID() string {
-	value := conf.DefaultFS()
-	if strings.HasPrefix(value, "viewfs://") {
-		return value;
+	nnUrl, _ := url.Parse(conf.DefaultFS())
+	switch nnUrl.Scheme {
+	case "viewfs": return "viewfs://" + nnUrl.Host
+	case "hdfs": return nnUrl.Host
+	default: return ""
 	}
-	if strings.HasPrefix(value, "hdfs://") {
-		nnUrl, _ := url.Parse(value)
-		return nnUrl.Host
-	}
-	return ""
 }
 
 // return the defaultFS
@@ -192,8 +189,7 @@ func (conf HadoopConf) AddressesByNameServiceID(nsid string) []string {
 	}
 	// sort and return
 	if len(rets) <= 0 {
-		//return nil
-		return []string{"111"}
+		return nil
 	} else {
 		sort.Strings(rets)
 		return rets

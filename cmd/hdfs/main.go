@@ -269,7 +269,11 @@ func getClient(namenode string) (*hdfs.Client, error) {
 
 	options := hdfs.ClientOptionsFromConf(*conf)
 	if namenode != "" {
-		options.Addresses = strings.Split(namenode, ",")
+		switch conf.CheckTypeOfNameAddressString(namenode) {
+		case hadoopconf.TNAS_SimpleAddress: options.Addresses = strings.Split(namenode, ",")
+		case hadoopconf.TNAS_SimpleNameServiceID, hadoopconf.TNAS_ViewfsNameServiceID:
+			options.Addresses = conf.AddressesByNameServiceID(namenode)
+		}
 	}
 
 	if options.Addresses == nil {
