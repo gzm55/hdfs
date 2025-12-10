@@ -20,8 +20,8 @@ setup() {
 @test "truncate" {
   run $HDFS put $ROOT_TEST_DIR/testdata/foo.txt /_test_cmd/truncate/1
 
-  # force check lease
-  run $HDFS touch /_test_cmd/truncate/1
+  # wait release lease
+  sleep 2
 
   run $HDFS truncate 2 /_test_cmd/truncate/1
   assert_success
