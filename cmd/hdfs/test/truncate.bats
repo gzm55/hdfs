@@ -22,6 +22,7 @@ setup() {
 
   # wait release lease
   sleep 5
+  run $HDFS cat /_test_cmd/truncate/1
 
   run $HDFS truncate 2 /_test_cmd/truncate/1
   assert_success
