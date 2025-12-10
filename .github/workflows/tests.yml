@@ -12,21 +12,21 @@ jobs:
     strategy:
       matrix:
         include:
-          - hadoop_version: 2.10.1
-          - hadoop_version: 3.3.1
-          - hadoop_version: 3.3.1
+          - hadoop_version: 2.10.2
+          - hadoop_version: 3.3.6
+          - hadoop_version: 3.3.6
             kerberos: true
             rpc_protection: authentication
             transfer_protection: authentication
-          - hadoop_version: 3.3.1
+          - hadoop_version: 3.3.6
             kerberos: true
             rpc_protection: integrity
             transfer_protection: integrity
-          - hadoop_version: 3.3.1
+          - hadoop_version: 3.3.6
             kerberos: true
             rpc_protection: privacy
             transfer_protection: privacy
-          - hadoop_version: 3.3.1
+          - hadoop_version: 3.3.6
             kerberos: true
             rpc_protection: privacy
             transfer_protection: privacy

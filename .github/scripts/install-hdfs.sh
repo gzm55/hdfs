@@ -17,9 +17,10 @@ fi
 
 CONF_AUTHENTICATION="simple"
 KERBEROS_REALM="EXAMPLE.COM"
-KERBEROS_PRINCIPLE="administrator"
+#KERBEROS_PRINCIPLE="administrator"
 KERBEROS_PASSWORD="password1234"
-if [ $KERBEROS = "true" ]; then
+echo "KERBEROS=$KERBEROS"
+if [ "$KERBEROS" = "true" ]; then
   CONF_AUTHENTICATION="kerberos"
 
   HOSTNAME=$(hostname)
@@ -49,20 +50,20 @@ EOF
   sudo apt-get update
   sudo apt-get install -y krb5-user krb5-kdc krb5-admin-server
 
-  printf "$KERBEROS_PASSWORD\n$KERBEROS_PASSWORD" | sudo kdb5_util -r "$KERBEROS_REALM" create -s
+  printf "%s\n%s" "$KERBEROS_PASSWORD" "$KERBEROS_PASSWORD" | sudo kdb5_util -r "$KERBEROS_REALM" create -s
   for p in nn dn $USER gohdfs1 gohdfs2; do
     sudo kadmin.local -q "addprinc -randkey $p/$HOSTNAME@$KERBEROS_REALM"
     sudo kadmin.local -q "addprinc -randkey $p/localhost@$KERBEROS_REALM"
     sudo kadmin.local -q "xst -k /tmp/$p.keytab $p/$HOSTNAME@$KERBEROS_REALM"
     sudo kadmin.local -q "xst -k /tmp/$p.keytab $p/localhost@$KERBEROS_REALM"
-    sudo chmod +rx /tmp/$p.keytab
+    sudo chmod +rx "/tmp/$p.keytab"
   done
 
   echo "Restarting krb services..."
   sudo service krb5-kdc restart
   sudo service krb5-admin-server restart
 
-  kinit -kt /tmp/$USER.keytab "$USER/localhost@$KERBEROS_REALM"
+  kinit -kt "/tmp/$USER.keytab" "$USER/localhost@$KERBEROS_REALM"
 
   # The go tests need ccache files for these principles in a specific place.
   for p in $USER gohdfs1 gohdfs2; do
@@ -72,13 +73,13 @@ fi
 
 URL="https://dlcdn.apache.org/hadoop/core/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz"
 echo "Downloading $URL"
-curl -o hadoop.tar.gz $URL
+curl -o hadoop.tar.gz "$URL"
 tar zxf hadoop.tar.gz
 
 HADOOP_ROOT="hadoop-${HADOOP_VERSION}/"
 mkdir -p /tmp/hdfs/name /tmp/hdfs/data
 
-sudo tee $HADOOP_ROOT/etc/hadoop/core-site.xml <<EOF
+sudo tee "$HADOOP_ROOT/etc/hadoop/core-site.xml" <<EOF
 <configuration>
   <property>
     <name>fs.defaultFS</name>
@@ -119,7 +120,7 @@ sudo tee $HADOOP_ROOT/etc/hadoop/core-site.xml <<EOF
 </configuration>
 EOF
 
-sudo tee $HADOOP_ROOT/etc/hadoop/hdfs-site.xml <<EOF
+sudo tee "$HADOOP_ROOT/etc/hadoop/hdfs-site.xml" <<EOF
 <configuration>
   <property>
     <name>dfs.namenode.name.dir</name>
@@ -168,20 +169,20 @@ sudo tee $HADOOP_ROOT/etc/hadoop/hdfs-site.xml <<EOF
 </configuration>
 EOF
 
-$HADOOP_ROOT/bin/hdfs namenode -format
+"$HADOOP_ROOT/bin/hdfs" namenode -format
 sudo groupadd hadoop
-sudo usermod -a -G hadoop $USER
+sudo usermod -a -G hadoop "$USER"
 
 echo "Starting namenode..."
-$HADOOP_ROOT/bin/hdfs namenode > /tmp/hdfs/namenode.log 2>&1 &
+"$HADOOP_ROOT/bin/hdfs" namenode > /tmp/hdfs/namenode.log 2>&1 &
 
 echo "Starting datanode..."
-$HADOOP_ROOT/bin/hdfs datanode > /tmp/hdfs/datanode.log 2>&1 &
+"$HADOOP_ROOT/bin/hdfs" datanode > /tmp/hdfs/datanode.log 2>&1 &
 
 sleep 5
 
 echo "Waiting for cluster to exit safe mode..."
-$HADOOP_ROOT/bin/hdfs dfsadmin -safemode wait
+"$HADOOP_ROOT/bin/hdfs" dfsadmin -safemode wait
 
-echo "HADOOP_CONF_DIR=$(pwd)/$HADOOP_ROOT/etc/hadoop" >> $GITHUB_ENV
-echo "$(pwd)/$HADOOP_ROOT/bin" >> $GITHUB_PATH
+echo "HADOOP_CONF_DIR=$(pwd)/$HADOOP_ROOT/etc/hadoop" >> "$GITHUB_ENV"
+echo "$(pwd)/$HADOOP_ROOT/bin" >> "$GITHUB_PATH"
