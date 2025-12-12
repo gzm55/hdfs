@@ -16,7 +16,7 @@ import (
 	krb "github.com/jcmturner/gokrb5/v8/client"
 )
 
-// TODO: cp, tree, test, trash
+// TODO: cp, tree, trash
 
 var (
 	version string
@@ -25,7 +25,7 @@ The flags available are a subset of the POSIX ones, but should behave similarly.
 
 Valid commands:
   ls [-lahR] [FILE]...
-  rm [-rf] FILE...
+  rm [-rf] [--skipTrash] [--forceTrash] FILE...
   mv [-nT] SOURCE... DEST
   mkdir [-p] FILE...
   touch [-c] FILE...
@@ -53,6 +53,8 @@ Valid commands:
 	rmOpts = getopt.New()
 	rmr    = rmOpts.Bool('r')
 	rmf    = rmOpts.Bool('f')
+	rmskipTrash = rmOpts.BoolLong("skipTrash", 0, "option bypasses trash, if enabled, and immediately deletes FILE")
+	rmforceTrash = rmOpts.BoolLong("forceTrash", 0, "skip checking whether the trash is enabled on server side")
 
 	mvOpts = getopt.New()
 	mvn    = mvOpts.Bool('n')
@@ -124,7 +126,7 @@ func main() {
 		ls(lsOpts.Args(), *lsl, *lsa, *lsh, *lsR)
 	case "rm":
 		rmOpts.Parse(argv)
-		rm(rmOpts.Args(), *rmr, *rmf)
+		rm(rmOpts.Args(), *rmr, *rmf, *rmskipTrash, *rmforceTrash)
 	case "mv":
 		mvOpts.Parse(argv)
 		mv(mvOpts.Args(), !*mvn, *mvT)

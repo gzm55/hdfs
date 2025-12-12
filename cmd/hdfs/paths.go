@@ -19,6 +19,9 @@ var (
 func userDir(client *hdfs.Client) string {
 	return path.Join("/user", client.User())
 }
+func trashRootDir(client *hdfs.Client) string {
+	return path.Join("/user", client.User(), ".Trash")
+}
 
 // normalizePaths parses the hosts out of HDFS (hdfs://, viewfs://, /abs/path, relative/path) URLs,
 // and turns relative paths into absolute ones (by appending /user/<user>).

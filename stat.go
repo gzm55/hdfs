@@ -18,6 +18,18 @@ type FileInfo struct {
 
 type FileStatus = hdfs.HdfsFileStatusProto
 
+// Exists return true when file exists
+func (c *Client) Exists(name string) (bool, error) {
+	req := &hdfs.GetFileInfoRequestProto{Src: proto.String(name)}
+	resp := &hdfs.GetFileInfoResponseProto{}
+	err := c.namenode.Execute("getFileInfo", req, resp)
+	if err != nil {
+		return false, &os.PathError{"exists", name, interpretException(err)}
+	}
+
+	return (resp.GetFs() != nil), nil
+}
+
 // Stat returns an os.FileInfo describing the named file or directory.
 func (c *Client) Stat(name string) (os.FileInfo, error) {
 	fi, err := c.getFileInfo(name)
