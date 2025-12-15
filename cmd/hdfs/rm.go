@@ -141,7 +141,7 @@ func moveToTrash(c *hdfs.Client, name string, forceTrash bool) (bool, error) {
 		// move to current trash
 		err = c.RenameForTrash(name, trashPath)
 		if err == nil {
-			fmt.Fprintln(os.Stdout, "Moved: '" + name + "' to trash at: " + trashPath)
+			fmt.Fprintln(os.Stdout, "Moved: 'hdfs://" + c.NSID() + name + "' to trash at: hdfs://" + c.NSID() + trashPath)
 			return true, nil
 		}
 	}

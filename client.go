@@ -56,6 +56,8 @@ type Client struct {
 type ClientOptions struct {
 	// Addresses specifies the namenode(s) to connect to.
 	Addresses []string
+	// nsid specifies the namenode service id to connect to.
+	NSID string
 	// User specifies which HDFS user the client will act as. It is required
 	// unless kerberos authentication is enabled, in which case it is overridden
 	// by the username set in KerberosClient.
@@ -134,7 +136,7 @@ type ClientOptions struct {
 //      options.KerberosClient = getKerberosClient()
 //   }
 func ClientOptionsFromConf(conf hadoopconf.HadoopConf) ClientOptions {
-	options := ClientOptions{Addresses: conf.Namenodes()}
+	options := ClientOptions{Addresses: conf.Namenodes(), NSID:conf.DefaultNSID()}
 
 	options.UseDatanodeHostname = (conf["dfs.client.use.datanode.hostname"] == "true")
 
@@ -248,6 +250,11 @@ func (c *Client) User() string {
 // with namenodes and datanodes.
 func (c *Client) Name() string {
 	return c.namenode.ClientName
+}
+
+// NSID returns the namenode service id
+func (c *Client) NSID() string {
+	return c.options.NSID
 }
 
 // ReadFile reads the file named by filename and returns the contents.

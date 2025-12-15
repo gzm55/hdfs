@@ -65,8 +65,8 @@ OUT
   run $HDFS rm -f --forceTrash /_test_cmd/rm/e
   assert_success
   case "$output" in
-  "Moved: '/_test_cmd/rm/e' to trash at: /user/$(whoami)/.Trash/Current/_test_cmd/rm/e"*) pattern=$output ;;
-  "Moved: '/_test_cmd/rm/e' to trash at: /user/$(whoami)/"*"/.Trash/Current/_test_cmd/rm/e"*) pattern=$output ;; # kerberos mode
+  "Moved: 'hdfs://"*"/_test_cmd/rm/e' to trash at: hdfs://"*"/user/$(whoami)/.Trash/Current/_test_cmd/rm/e"*) pattern=$output ;;
+  "Moved: 'hdfs://"*"/_test_cmd/rm/e' to trash at: hdfs://"*"/user/$(whoami)/"*"/.Trash/Current/_test_cmd/rm/e"*) pattern=$output ;; # kerberos mode
   esac
   assert_output "$pattern"
 

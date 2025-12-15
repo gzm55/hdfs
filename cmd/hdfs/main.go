@@ -271,10 +271,17 @@ func getClient(namenode string) (*hdfs.Client, error) {
 
 	options := hdfs.ClientOptionsFromConf(*conf)
 	if namenode != "" {
+		options.NSID = namenode
 		switch conf.CheckTypeOfNameAddressString(namenode) {
-		case hadoopconf.TNAS_SimpleAddress: options.Addresses = strings.Split(namenode, ",")
-		case hadoopconf.TNAS_SimpleNameServiceID, hadoopconf.TNAS_ViewfsNameServiceID:
+		case hadoopconf.TNAS_SimpleAddress:
+			options.Addresses = strings.Split(namenode, ",")
+			if len(options.Addresses) > 0 {
+				options.NSID = options.Addresses[0]
+			}
+		case hadoopconf.TNAS_SimpleNameServiceID:
 			options.Addresses = conf.AddressesByNameServiceID(namenode)
+		case hadoopconf.TNAS_ViewfsNameServiceID:
+			return nil, errors.New("Cannot create hdfs Client from nsid " + namenode)
 		}
 	}
 
