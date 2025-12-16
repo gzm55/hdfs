@@ -101,6 +101,11 @@ func (fi *FileInfo) Sys() interface{} {
 	return fi.status
 }
 
+// It's not part of the os.FileInfo interface.
+func (fi *FileInfo) IsFile() bool {
+	return fi.status.GetFileType() == hdfs.HdfsFileStatusProto_IS_FILE
+}
+
 // Owner returns the name of the user that owns the file or directory. It's not
 // part of the os.FileInfo interface.
 func (fi *FileInfo) Owner() string {

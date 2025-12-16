@@ -41,6 +41,7 @@ Valid commands:
   getmerge SOURCE DEST
   put SOURCE DEST
   df [-h]
+  setrep REP FILE...
   truncate SIZE FILE
 `, os.Args[0])
 
@@ -165,6 +166,8 @@ func main() {
 	case "test":
 		testOpts.Parse(argv)
 		test(testOpts.Args(), *teste, *testf, *testd, *testz, *tests)
+	case "setrep":
+		setrep(argv[1:])
 	case "truncate":
 		truncate(argv[1:])
 	// it's a seeeeecret command
