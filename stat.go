@@ -123,3 +123,13 @@ func (fi *FileInfo) OwnerGroup() string {
 func (fi *FileInfo) AccessTime() time.Time {
 	return time.Unix(int64(fi.status.GetAccessTime())/1000, 0)
 }
+
+// GetReplication returns the expected block replication.
+// It's not part of the os.FileInfo interface.
+func (fi *FileInfo) GetReplication() int32 {
+	if fi.status.BlockReplication != nil {
+		return int32(*fi.status.BlockReplication)
+	}
+	// unknown replication
+	return -1
+}

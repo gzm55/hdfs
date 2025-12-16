@@ -40,6 +40,12 @@ func setrep(args []string) {
 				return nil
 			}
 
+			currRep := info.(*hdfs.FileInfo).GetReplication()
+			if currRep == 0 || currRep == int32(newRep) {
+				// ignore file with ec are ignored or already has the expected replication
+				return nil
+			}
+
 			// file with ec are ignored
 			success, err := client.SetReplication(path, uint32(newRep))
 			if success {
