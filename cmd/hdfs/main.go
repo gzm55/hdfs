@@ -175,6 +175,8 @@ func main() {
 		complete(argv)
 	case "help", "-h", "-help", "--help":
 		printHelp()
+	case "print-minimal-config":
+		printMinimalConfig()
 	default:
 		fatalWithUsage("Unknown command:", command)
 	}
@@ -322,4 +324,36 @@ func getClient(namenode string) (*hdfs.Client, error) {
 
 	cachedClients[namenode] = c
 	return c, nil
+}
+
+func printMinimalConfig() {
+	conf, err := getConf()
+	if err != nil {
+		fatal("Cannot load hadoop conf", err)
+	}
+
+	known_keys := map[string]struct{}{
+		"dfs.client.use.datanode.hostname": {},
+		"dfs.data.transfer.protection": {},
+		"dfs.encrypt.data.transfer": {},
+		"dfs.namenode.kerberos.principal": {},
+		"dfs.nameservices": {},
+		"fs.default.name": {},
+		"fs.defaultFS": {},
+	}
+
+	miniConf := make(hadoopconf.HadoopConf)
+	for k, v := range *conf {
+		if _, ok := known_keys[k]; ok {
+			miniConf[k] = v
+		} else if strings.HasPrefix(k, "dfs.namenode.rpc-address.") {
+			miniConf[k] = v
+		} else if strings.HasPrefix(k, "dfs.ha.namenodes.") {
+			miniConf[k] = v
+		} else if strings.HasPrefix(k, "fs.viewfs.mounttable.") {
+			miniConf[k] = v
+		}
+	}
+
+	miniConf.MarshalXMLFile(os.Stdout)
 }

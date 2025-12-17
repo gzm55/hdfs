@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -89,6 +90,69 @@ func Load(path string) (HadoopConf, error) {
 	}
 
 	return conf, nil
+}
+
+
+func (p propertyList) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
+    // <configuration>
+    start.Name.Local = "configuration"
+    if err := enc.EncodeToken(start); err != nil {
+        return err
+    }
+
+    if err := enc.EncodeToken(xml.CharData("\n")); err != nil {
+        return err
+    }
+
+    for _, prop := range p.Property {
+	    // merge <property>...</property> into one line
+	    if err := enc.Encode(prop); err != nil {
+		    return err
+	    }
+	    if err := enc.EncodeToken(xml.CharData("\n")); err != nil {
+		    return err
+	    }
+    }
+
+    if err := enc.EncodeToken(start.End()); err != nil {
+        return err
+    }
+
+    return enc.EncodeToken(xml.CharData("\n"))
+}
+
+func (conf HadoopConf) MarshalXMLFile(w io.Writer) error {
+    // sort keys
+    keys := make([]string, 0, len(conf))
+    for k := range conf {
+        keys = append(keys, k)
+    }
+    sort.Strings(keys)
+
+    // rebuild propertyList
+    plist := propertyList{
+        Property: make([]property, 0, len(keys)),
+    }
+
+    for _, k := range keys {
+        plist.Property = append(plist.Property, property{
+            Name:  k,
+            Value: conf[k],
+        })
+    }
+
+    enc := xml.NewEncoder(w)
+
+    // XML header
+    if _, err := io.WriteString(w, `<?xml version="1.0" encoding="UTF-8" standalone="no"?>`); err != nil {
+        return err
+    }
+
+    if err := enc.Encode(plist); err != nil {
+        return err
+    }
+
+    return enc.Flush()
 }
 
 // Namenodes returns the default namenode hosts present in the configuration. The
