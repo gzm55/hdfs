@@ -84,6 +84,16 @@ setup() {
   assert_output "2 2 2"
 }
 
+@test "setrep multiple" {
+  run $HDFS setrep 2 /_test_cmd/setrep/single /_test_cmd/nonexistent /_test_cmd/setrep/one-level
+  assert_success
+  assert_output <<-OUT
+	Replication 2 set: hdfs://localhost:9000/_test_cmd/setrep/single
+	Replication 2 set: hdfs://localhost:9000/_test_cmd/setrep/one-level/1
+	Replication 2 set: hdfs://localhost:9000/_test_cmd/setrep/one-level/2
+	OUT
+}
+
 teardown() {
   $HDFS rm -r /_test_cmd/setrep
 }
