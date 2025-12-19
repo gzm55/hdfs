@@ -24,11 +24,13 @@ setup() {
 @test "exists for non existent file" {
   run $HDFS test -e /_test_cmd/test/bar.txt
   assert_failure
+  assert_output ""
 }
 
 @test "exists for non existent dir" {
   run $HDFS test -e /_test_cmd/test/dir9
   assert_failure
+  assert_output ""
 }
 
 @test "isfile for existent file" {
@@ -44,6 +46,7 @@ setup() {
 @test "isfile for non existent file" {
   run $HDFS test -f /_test_cmd/test/bar.txt
   assert_failure
+  assert_output ""
 }
 
 @test "isfile for non existent dir" {
@@ -64,11 +67,13 @@ setup() {
 @test "isdir for non existent file" {
   run $HDFS test -d /_test_cmd/test/bar.txt
   assert_failure
+  assert_output ""
 }
 
 @test "isdir for non existent dir" {
   run $HDFS test -d /_test_cmd/test/dir9
   assert_failure
+  assert_output ""
 }
 
 @test "isnonempty for existent empty file" {
@@ -89,11 +94,13 @@ setup() {
 @test "isnonempty for non existent file" {
   run $HDFS test -s /_test_cmd/test/bar.txt
   assert_failure
+  assert_output ""
 }
 
 @test "isnonempty for non existent dir" {
   run $HDFS test -s /_test_cmd/test/dir9
   assert_failure
+  assert_output ""
 }
 
 @test "isempty for existent empty file" {
@@ -115,11 +122,13 @@ setup() {
 @test "isempty for non existent file" {
   run $HDFS test -z /_test_cmd/test/bar.txt
   assert_failure
+  assert_output ""
 }
 
 @test "isempty for non existent dir" {
   run $HDFS test -z /_test_cmd/test/dir9
   assert_failure
+  assert_output ""
 }
 
 teardown() {
