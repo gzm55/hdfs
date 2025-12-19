@@ -99,17 +99,17 @@ Valid commands:
 )
 
 func init() {
-	lsOpts.SetUsage(printHelp)
-	rmOpts.SetUsage(printHelp)
-	mvOpts.SetUsage(printHelp)
-	touchOpts.SetUsage(printHelp)
-	chmodOpts.SetUsage(printHelp)
-	chownOpts.SetUsage(printHelp)
-	headTailOpts.SetUsage(printHelp)
-	duOpts.SetUsage(printHelp)
-	getmergeOpts.SetUsage(printHelp)
-	dfOpts.SetUsage(printHelp)
-	testOpts.SetUsage(printHelp)
+	lsOpts.SetUsage(func() { fatalWithUsage() })
+	rmOpts.SetUsage(func() { fatalWithUsage() })
+	mvOpts.SetUsage(func() { fatalWithUsage() })
+	touchOpts.SetUsage(func() { fatalWithUsage() })
+	chmodOpts.SetUsage(func() { fatalWithUsage() })
+	chownOpts.SetUsage(func() { fatalWithUsage() })
+	headTailOpts.SetUsage(func() { fatalWithUsage() })
+	duOpts.SetUsage(func() { fatalWithUsage() })
+	getmergeOpts.SetUsage(func() { fatalWithUsage() })
+	dfOpts.SetUsage(func() { fatalWithUsage() })
+	testOpts.SetUsage(func() { fatalWithUsage() })
 }
 
 func main() {

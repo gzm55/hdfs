@@ -11,6 +11,24 @@ setup() {
   $HDFS put $ROOT_TEST_DIR/testdata/foo.txt /_test_cmd/test/dir1/foo1.txt
 }
 
+@test "invalid option" {
+  status=0
+  run $HDFS test -Q /_test_cmd/test/foo.txt
+  assert_equal 2 "$status"
+
+  status=0
+  run $HDFS test -Q
+  assert_equal 2 "$status"
+
+  status=0
+  run $HDFS test -e
+  assert_equal 2 "$status"
+
+  status=0
+  run $HDFS test
+  assert_equal 2 "$status"
+}
+
 @test "exists for existent file" {
   run $HDFS test -e /_test_cmd/test/foo.txt
   assert_success
