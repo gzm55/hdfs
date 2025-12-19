@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/colinmarc/hdfs/v2"
 )
 
 type testFn func(fi os.FileInfo) bool
@@ -29,13 +31,13 @@ func test(args []string, exists, file, dir, empty, nonempty bool) {
 	case exists:
 		f = func(fi os.FileInfo) bool { return fi != nil }
 	case dir:
-		f = func(fi os.FileInfo) bool { return fi.IsDir() }
+		f = func(fi os.FileInfo) bool { return fi != nil && fi.IsDir() }
 	case file:
-		f = func(fi os.FileInfo) bool { return !fi.IsDir() }
+		f = func(fi os.FileInfo) bool { return fi != nil && fi.(*hdfs.FileInfo).IsFile() }
 	case nonempty:
-		f = func(fi os.FileInfo) bool { return fi.Size() != 0 }
+		f = func(fi os.FileInfo) bool { return fi != nil && fi.Size() != 0 }
 	case empty:
-		f = func(fi os.FileInfo) bool { return fi.Size() == 0 }
+		f = func(fi os.FileInfo) bool { return fi != nil && fi.Size() == 0 }
 	}
 
 	expanded, client, err := getClientAndExpandedPaths(args)
