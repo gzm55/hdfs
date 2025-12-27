@@ -115,6 +115,10 @@ func TestChtimes(t *testing.T) {
 	root_fi, err := client.Stat("/")
 	assert.NoError(t, err)
 
+	assert.NotEqual(t, root_fi.(*FileInfo).status.GetModificationTime(), fi.(*FileInfo).status.GetModificationTime())
+	assert.NotEqual(t, root_fi.(*FileInfo).status.GetAccessTime(), fi.(*FileInfo).status.GetAccessTime())
+
+
 	err = client.Copytimes("/_test/tochtime", root_fi.(*FileInfo).status)
 	assert.NoError(t, err)
 
