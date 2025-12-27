@@ -115,12 +115,12 @@ func TestChtimes(t *testing.T) {
 	root_fi, err := client.Stat("/")
 	assert.NoError(t, err)
 
-	err = client.Copytimes("/_test/tochtime", root_fi.status)
+	err = client.Copytimes("/_test/tochtime", root_fi.(*hdfs.FileInfo).status)
 	assert.NoError(t, err)
 
 	fi2, err := client.Stat("/_test/tochtime")
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, root_fi.GetModificationTime(), fi2.GetModificationTime())
-	assert.EqualValues(t, root_fi.GetAccessTime(), fi2.GetAccessTime())
+	assert.EqualValues(t, root_fi.(*hdfs.FileInfo).status.GetModificationTime(), fi2.(*hdfs.FileInfo).status.GetModificationTime())
+	assert.EqualValues(t, root_fi.(*hdfs.FileInfo).status.GetAccessTime(), fi2.(*hdfs.FileInfo).status.GetAccessTime())
 }
