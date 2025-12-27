@@ -115,7 +115,7 @@ func TestChtimes(t *testing.T) {
 	root_fi, err := client.Stat("/")
 	assert.NoError(t, err)
 
-	err = client.Copytimes("/_test/tochtime", root_fi.(*hdfs.FileInfo).status)
+	err = client.Copytimes("/_test/tochtime", root_fi.(*FileInfo).status)
 	assert.NoError(t, err)
 
 	fi2, err := client.Stat("/_test/tochtime")
