@@ -61,3 +61,20 @@ func (c *Client) Chtimes(name string, atime time.Time, mtime time.Time) error {
 
 	return nil
 }
+
+// Copytimes copies the access and modification times of stat to the named file.
+func (c *Client) Copytimes(name string, status *hdfs.HdfsFileStatusProto) error {
+	req := &hdfs.SetTimesRequestProto{
+		Src:   proto.String(name),
+		Mtime: proto.Uint64(status.GetModificationTime()),
+		Atime: proto.Uint64(status.GetAccessTime()),
+	}
+	resp := &hdfs.SetTimesResponseProto{}
+
+	err := c.namenode.Execute("setTimes", req, resp)
+	if err != nil {
+		return &os.PathError{"copytimes", name, interpretException(err)}
+	}
+
+	return nil
+}

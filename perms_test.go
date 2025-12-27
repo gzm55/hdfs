@@ -111,4 +111,16 @@ func TestChtimes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, birthday, fi.ModTime().UTC(), birthday)
 	assert.EqualValues(t, birthday, fi.(*FileInfo).AccessTime().UTC(), birthday)
+
+	root_fi, err := client.Stat("/")
+	assert.NoError(t, err)
+
+	err = client.Copytimes("/_test/tochtime", root_fi.status)
+	assert.NoError(t, err)
+
+	fi2, err := client.Stat("/_test/tochtime")
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, root_fi.GetModificationTime(), fi2.GetModificationTime())
+	assert.EqualValues(t, root_fi.GetAccessTime(), fi2.GetAccessTime())
 }
