@@ -10,6 +10,9 @@ setup() {
   $HDFS touch /_test_cmd/rm/d
   $HDFS touch /_test_cmd/rm/e
   $HDFS touch /_test_cmd/rm/f
+  $HDFS touch /_test_cmd/rm/preserveTs-1
+  $HDFS touch /_test_cmd/rm/preserveTs-2
+  $HDFS touch /_test_cmd/rm/preserveTs-3
 }
 
 @test "rm" {
@@ -79,6 +82,35 @@ OUT
   run $HDFS rm -f -r --forceTrash /user/$(whoami)
   assert_failure
   assert_output "Cannot move \"/user/$(whoami)\" to the trash, as it contains the trash"
+}
+
+@test "rm with preserve timestamp" {
+  run bash -c "$HADOOP_FS -stat %Y /_test_cmd/rm 2>/dev/null"
+  ts1="$output"
+
+  sleep 1
+  run $HDFS rm -f -r --forceTrash /_test_cmd/rm/preserveTs-1
+  assert_success
+  run bash -c "$HADOOP_FS -stat %Y /_test_cmd/rm 2>/dev/null"
+  ts2="$output"
+  run bash -c "(( $ts1 < $ts2 ))"
+  assert_success
+
+  sleep 1
+  run $HDFS rm -f -r --forceTrash --preserveDirTs /_test_cmd/rm/preserveTs-2
+  assert_success
+  run bash -c "$HADOOP_FS -stat %Y /_test_cmd/rm 2>/dev/null"
+  ts3="$output"
+  run bash -c "(( $ts2 == $ts3 ))"
+  assert_success
+
+  sleep 1
+  run $HDFS rm -f -r --skipTrash --preserveDirTs /_test_cmd/rm/preserveTs-3
+  assert_success
+  run bash -c "$HADOOP_FS -stat %Y /_test_cmd/rm 2>/dev/null"
+  ts4="$output"
+  run bash -c "(( $ts2 == $ts4 ))"
+  assert_success
 }
 
 teardown() {

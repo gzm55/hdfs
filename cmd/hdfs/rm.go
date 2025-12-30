@@ -13,7 +13,7 @@ import (
 	"github.com/colinmarc/hdfs/v2"
 )
 
-func rm(paths []string, recursive bool, force bool, skipTrash bool, forceTrash bool) {
+func rm(paths []string, recursive bool, force bool, skipTrash bool, forceTrash bool, preserveTime bool) {
 	expanded, client, err := getClientAndExpandedPaths(paths)
 	if err != nil {
 		fatal(err)
@@ -41,6 +41,24 @@ func rm(paths []string, recursive bool, force bool, skipTrash bool, forceTrash b
 			continue
 		}
 
+		var dir string
+		var dirStat os.FileInfo
+		if preserveTime {
+			// save parent stat for restoring mtime/atime of the parent dir
+			dir = path.Dir(p)
+			if dir == p {
+				// p is root dir
+				dirStat = nil
+			} else {
+				dirStat, err = client.Stat(dir)
+				if err != nil || !dirStat.IsDir() {
+					fmt.Fprintln(os.Stderr, &os.PathError{"remove", p, errors.New("base dir does not exist or is not a directory")})
+
+					dirStat = nil
+				}
+			}
+		}
+
 		if !skipTrash {
 			// always enable trash on client side
 			success, err := moveToTrash(client, p, forceTrash)
@@ -49,6 +67,12 @@ func rm(paths []string, recursive bool, force bool, skipTrash bool, forceTrash b
 			} else if err != nil {
 				fatal(err)
 			} else if success {
+				if dirStat != nil {
+					err = client.Copytimes(dir, dirStat.(*hdfs.FileInfo).Sys().(*hdfs.FileStatus))
+					if err != nil {
+						fmt.Fprintln(os.Stderr, &os.PathError{"remove", p, errors.New("fail to restore timestamps of base dir")})
+					}
+				}
 				continue
 			}
 		}
@@ -57,6 +81,11 @@ func rm(paths []string, recursive bool, force bool, skipTrash bool, forceTrash b
 		err = client.RemoveAll(p)
 		if err != nil {
 			fatal(err)
+		} else if dirStat != nil {
+			err = client.Copytimes(dir, dirStat.(*hdfs.FileInfo).Sys().(*hdfs.FileStatus))
+			if err != nil {
+				fmt.Fprintln(os.Stderr, &os.PathError{"remove", p, errors.New("fail to restore timestamps of base dir")})
+			}
 		}
 	}
 }
