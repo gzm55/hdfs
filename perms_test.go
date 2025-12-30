@@ -119,7 +119,7 @@ func TestChtimes(t *testing.T) {
 	assert.NotEqual(t, root_fi.(*FileInfo).status.GetAccessTime(), fi.(*FileInfo).status.GetAccessTime())
 
 
-	err = client.Copytimes("/_test/tochtime", root_fi.(*FileInfo).Sys().(*hdfs.FileStatus))
+	err = client.Copytimes("/_test/tochtime", root_fi.(*FileInfo).Sys().(*FileStatus))
 	assert.NoError(t, err)
 
 	fi2, err := client.Stat("/_test/tochtime")
